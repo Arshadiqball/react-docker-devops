@@ -1,29 +1,30 @@
-provider "null" {
-  # Null provider to run local-exec provisioner
-}
+provider "null" {}
 
 resource "null_resource" "run_react_app" {
 
-  # Install Docker (for Windows PowerShell)
+  # Use a random trigger (e.g., git commit hash) to force redeployment
+  triggers = {
+    always_run = "${timestamp()}"
+  }
+
+  # Install Docker (this assumes Docker is not installed; if already installed, this step is optional)
   provisioner "local-exec" {
     command = <<EOT
-      if (!(Get-Command docker -ErrorAction SilentlyContinue)) {
-        Write-Host "Docker is not installed. Installing Docker..."
-        choco install docker-desktop -y
-        Start-Sleep -s 20
-      } else {
-        Write-Host "Docker is already installed."
-      }
+      if ! [ -x "$(command -v docker)" ]; then
+        echo "Docker is not installed. Installing Docker..."
+        sudo apt update
+        sudo apt install -y docker.io
+      else
+        echo "Docker is already installed."
+      fi
     EOT
-    interpreter = ["PowerShell", "-Command"]
   }
 
   # Run the Docker container for the React app
   provisioner "local-exec" {
     command = <<EOT
       docker pull ghcr.io/yourusername/task-manager-app:latest
-      docker run -d -p 3000:80 ghcr.io/arshadiqball/react-app-deployment:latest
+      docker run -d -p 3000:80 ghcr.io/yourusername/task-manager-app:latest
     EOT
-    interpreter = ["PowerShell", "-Command"]
   }
 }
