@@ -2,6 +2,11 @@ provider "null" {}
 
 resource "null_resource" "run_react_app" {
 
+  # Use a dynamic trigger (such as timestamp) to force the provisioner to run every time
+  triggers = {
+    always_run = "${timestamp()}"
+  }
+
   # Use PowerShell to check if Docker is installed, and install it if necessary
   provisioner "local-exec" {
     command = <<EOT
@@ -31,4 +36,5 @@ resource "null_resource" "run_react_app" {
     EOT
     interpreter = ["PowerShell", "-Command"]
   }
+  
 }
