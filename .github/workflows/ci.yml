@@ -1,0 +1,62 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  install-and-test:
+    name: Install and Test React App
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16.x'
+
+      # Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Run lint (optional, depends on if you have a linter set up)
+      - name: Run lint
+        run: npm run lint
+
+      # Run tests (you can use Jest or any other test framework)
+      - name: Run tests
+        run: npm test -- --watchAll=false
+
+      # Build the React application
+      - name: Build React app
+        run: npm run build
+
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: install-and-test
+    steps:
+      # Checkout code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Log in to GitHub Container Registry (GHCR) using Personal Access Token (PAT)
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      # Build Docker image
+      - name: Build Docker image
+        run: docker build -t react-app-deployment:latest .
+
+      # Tag the Docker image (use lowercase for the repository name)
+      - name: Tag Docker image
+        run: docker tag react-app-deployment:latest ghcr.io/arshadiqball/react-app-deployment:latest
+
+      # Push the Docker image to GHCR
+      - name: Push Docker image to GHCR
+        run: docker push ghcr.io/arshadiqball/react-app-deployment:latest

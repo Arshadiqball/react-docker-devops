@@ -1,0 +1,41 @@
+---
+- name: Configure Database Server
+  hosts: db
+  become: yes
+  vars:
+    mysql_root_password: "rootpassword"  # Replace with your actual root passwo>  tasks:
+    - name: Install MySQL
+      apt:
+        name: mysql-server
+        state: present
+        update_cache: yes
+
+    - name: Start and enable MySQL service
+      service:
+        name: mysql
+        state: started
+        enabled: yes
+
+    - name: Set MySQL root password
+      mysql_user:
+        name: root
+        password: "{{ mysql_root_password }}"
+        host_all: true
+        priv: "*.*:ALL,GRANT"
+        state: present
+
+    - name: Create a sample database
+      mysql_db:
+        name: testdb
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Create a test user for the database
+      mysql_user:
+        name: testuser
+        password: "password"
+        priv: "testdb.*:ALL"
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"

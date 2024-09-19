@@ -1,0 +1,46 @@
+---
+- name: Deploy Dockerized App from GHCR
+  hosts: localhost
+  become: yes  # Use sudo to ensure Docker commands are run with the necessary privileges
+  vars:
+    ghcr_pat: "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"  # Hardcoding the token for simplicity, or use Ansible Vault for security
+    github_actor: "arshadiqball"  # Your GitHub username
+  tasks:
+    - name: Ensure Docker is installed
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+
+    - name: Ensure Docker is running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Log in to GHCR using the Docker login module
+      community.docker.docker_login:
+        registry_url: ghcr.io
+        username: "Arshadiqball"
+        password: "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"
+
+    - name: Pull the Docker image from GHCR
+      shell: |
+        docker pull ghcr.io/arshadiqball/deployment-test:latest
+      register: pull_result
+      retries: 3  # Retry if there are transient issues
+      delay: 10
+
+    - name: Stop and remove any existing container
+      community.docker.docker_container:
+        name: deployment-test-container
+        state: absent
+
+    - name: Run the Docker container
+      community.docker.docker_container:
+        name: deployment-test-container
+        image: ghcr.io/arshadiqball/deployment-test:latest
+        state: started
+        ports:
+          - "8080:80"
+        restart_policy: always
