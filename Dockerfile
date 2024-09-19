@@ -4,12 +4,11 @@ FROM node:16-alpine as build
 # Set the working directory
 WORKDIR /app
 
-# Copy package.json and yarn.lock to the working directory
+# Copy package.json and package-lock.json (if you are using npm)
 COPY package*.json ./
-COPY yarn.lock ./
 
-# Install dependencies using Yarn
-RUN yarn install
+# Install dependencies using npm
+RUN npm install
 
 # Copy the rest of the application
 COPY . .
